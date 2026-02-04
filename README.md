@@ -15,3 +15,4 @@ Start by running `npm install` inside the project folder
 `npm run start-prod` to run your production build
 
 Small changes added to add-new-feature branch
+Added if condition to trigger deployment

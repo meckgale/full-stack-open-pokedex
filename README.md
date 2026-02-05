@@ -17,3 +17,4 @@ Start by running `npm install` inside the project folder
 Small changes added to add-new-feature branch
 Added if condition to trigger deployment
 skip test for last line
+adding protection to main branch

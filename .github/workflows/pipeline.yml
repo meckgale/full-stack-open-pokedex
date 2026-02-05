@@ -12,6 +12,8 @@ on:
 jobs:
   simple_deployment_pipeline:
     runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.skipcheck.outputs.skip || steps.skipdefault.outputs.skip  }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,13 +31,30 @@ jobs:
         run: npx playwright install --with-deps
       - name: Run end-to-end tests
         run: npm run test:e2e
-      - name: Trigger deployment
+      - name: Decide skip
+        id: skipcheck
         if: ${{ github.event_name == 'push' }}
+        run: |
+          MSGS="${{ join(github.event.commits.*.message, ' ') }}"
+          if echo "$MSGS" | grep -q "#skip"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Default skip=false (non-push)
+        id: skipdefault
+        if: ${{ github.event_name != 'push' }}
+        run: echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger deployment
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.skipcheck.outputs.skip != 'true' }}
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
+
   tag_release:
     needs: [simple_deployment_pipeline]
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.simple_deployment_pipeline.outputs.skip != 'true' }}
     steps:
       - uses: actions/checkout@v4
         with:

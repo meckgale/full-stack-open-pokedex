@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0 0 1 1,4,7,10 *' # At 00:00 on day-of-month 1 in January, April, July, and October
 jobs:
   health_check:
     runs-on: ubuntu-latest
